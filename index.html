@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nimiq Validator Migration Readiness Monitor</title>
+</head>
+
+<body>
+    <h1>Nimiq Validator Migration Readiness Monitor</h1>
+    <p>Consensus status of PoW Node: <span id="nodeConsensus">Unknown</span></p>
+    <p>Total stake: <span id="totalStake">Unknown</span></p>
+
+    <h2>Online (<span id="percentageOnline">0</span>%)</h2>
+    <h3>Validators indicated they're ready between 16th and 19th of Nov</h3>
+    <table>
+        <tbody id="validatorOnlineTable">
+        </tbody>
+    </table>
+
+    <h2>Ready</h2>
+    <h3>Validator is ready during the Activation Phase</h3>
+    <table>
+        <thead>
+            <tr id="readyTableHeader">
+                <td>Validator</td>
+            </tr>
+        </thead>
+        <tbody id="validatorReadyTable">
+
+        </tbody>
+    </table>
+</body>
+
+<style>
+    th,
+    td {
+        border: 1px solid black;
+    }
+
+    td {
+        padding: 10px;
+    }
+</style>
+
+<script>
+    const nodeConsensusEl = document.getElementById('nodeConsensus');
+    const totalStakeEl = document.getElementById('totalStake');
+    const percentageOnlineEl = document.getElementById('percentageOnline');
+    const windows = [
+        {
+            start: 3456000,
+            end: 3457440
+        },
+        {
+            start: 3457440,
+            end: 3458880
+        },
+        {
+            start: 3458880,
+            end: 3460320
+        },
+        {
+            start: 3460320,
+            end: 3461760
+        },
+        {
+            start: 3461760,
+            end: 3463200
+        },
+        {
+            start: 3463200,
+            end: 3464640
+        }
+    ];
+    let validators = [];
+    let totalStake = 0;
+    let percentageOnline = 0;
+
+    windows.forEach((window) => {
+        const el = document.createElement('td');
+        el.innerText = `Block window ${window.start} - ${window.end}`;
+        readyTableHeader.appendChild(el)
+    });
+
+    (async () => {
+        const validatorFile = await fetch('https://v2.nimiqwatch.com/api/v2/validators');
+        nodeConsensusEl.innerText = await rpc("consensus", null);
+        validators = await validatorFile.json();
+        validators = validators.sort((a, b) => b.delegatedStake - a.delegatedStake);
+
+        validators.forEach(validator => {
+            totalStake += validator.delegatedStake + validator.deposit;
+        });
+
+        for await (const validator of validators) {
+            validator.portion = (validator.delegatedStake + validator.deposit) / totalStake * 100;
+            validator.transactions = (await rpc("getTransactionsByAddress", [validator.address]))
+                .sort((a, b) => b.blockNumber - a.blockNumber);
+            validatorOnlineColumn(validator);
+            validatorReadyColumn(validator);
+            percentageOnlineEl.innerText = percentageOnline.toFixed(2);
+        };
+
+        totalStakeEl.innerText = lunaToNim(totalStake);
+    })()
+
+    function shortenAddress(address) {
+        const parts = address.split(" ");
+        return `${parts[0]}...${parts[parts.length - 1]}`;
+    }
+
+    function lunaToNim(amount) {
+        return prettyNumber(amount / 1e5);
+    }
+
+    function prettyNumber(number) {
+        const roundedNumber = Math.round(number);
+        return roundedNumber.toString().replace(/\B(?=(\d{3})+(?!\d))/g, "'");
+    }
+
+    function isValidatorOnline(txns) {
+        txns = txns
+            .filter((txn) =>
+                txn.to === "0000000000000000000000000000000000000000" // Burn address
+                && txn.value === 1
+                && txn.data === "6f6e6c696e65") // "online"
+
+        if (txns.length > 0) {
+            return [true, txns[0].timestamp * 1000]
+        }
+
+        return [false, null]
+    }
+
+    function isValidatorReady(txns, startWindow, endWindow) {
+        let readyTxn = txns.find((txn) =>
+            txn.to === "0000000000000000000000000000000000000000" // Burn address
+            && txn.value === 1
+            && txn.data.length === 128
+            && txn.blockNumber >= startWindow
+            && txn.blockNumber <= endWindow
+        )
+
+        return readyTxn;
+    }
+
+    async function rpc(method, params) {
+        let url = 'http://127.0.0.1:8648';
+        let body = {
+            "jsonrpc": "2.0",
+            "method": method,
+            "params": params ? params : [],
+            "id": 1
+        }
+        let options = {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(body)
+        };
+
+        let json = await (await fetch(url, options)).json()
+        return json.result
+    }
+
+    function validatorOnlineColumn(validator) {
+        const validatorOnline = isValidatorOnline(validator.transactions);
+
+        const headerCell = document.createElement('tr');
+        headerCell.innerHTML = `
+        <a href="http://nimiq.watch/#${validator.address}" target="_blank" style="color:blue;">${shortenAddress(validator.address)}</a>
+        with a stake of ${lunaToNim(validator.deposit + validator.delegatedStake)} NIM (${validator.portion.toFixed(2)}%)
+        `
+        if (validatorOnline[0]) {
+            headerCell.innerHTML += `is marked as <b><span style="color: green">online</span></b> on ${new Date(validatorOnline[1]).toUTCString()}`
+            percentageOnline += validator.portion
+        } else {
+            headerCell.innerHTML += `is marked as <b><span style="color: red">offline</span></b>`
+        }
+
+        validatorOnlineTable.appendChild(headerCell);
+    }
+
+    function validatorReadyColumn(validator) {
+        const row = document.createElement('tr')
+        const addressColumn = document.createElement('td');
+        addressColumn.innerHTML = `<a href="http://nimiq.watch/#${validator.address}" target="_blank" style="color:blue;">${shortenAddress(validator.address)}</a> (${validator.portion.toFixed(2)}%)`;
+        row.appendChild(addressColumn)
+
+        windows.forEach((start, end) => {
+            const readyTxn = isValidatorReady(validator.transactions, start, end);
+            const readyColumn = document.createElement('td');
+            if (!readyTxn) {
+                readyColumn.innerHTML = `<center><span style="background-color: red">X</span></center>`;
+            } else {
+                readyColumn.innerHTML = `
+                <center>
+                    <a href="http://nimiq.watch/#${readyTxn.hash}" target="_blank">
+                        <span style="background-color: #52CC7A; color: black">
+                            ${readyTxn.data.substring(0, 20)}
+                        </span>
+                    </>
+                </center>
+                `;
+            }
+            row.appendChild(readyColumn);
+        })
+
+        validatorReadyTable.appendChild(row)
+    }
+</script>
+
+</html>

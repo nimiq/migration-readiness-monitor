@@ -5,44 +5,105 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nimiq Validator Migration Readiness Monitor</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+
+        h1,
+        h2,
+        h3,
+        h4 {
+            text-align: center;
+            color: #333;
+        }
+
+        h1 {
+            background-color: #4CAF50;
+            color: white;
+            padding: 20px 0;
+            margin: 0;
+        }
+
+        h2,
+        h3 {
+            margin-top: 20px;
+        }
+
+        p {
+            text-align: center;
+            font-size: 1.1em;
+            margin: 5px;
+        }
+
+        .table-container {
+            display: flex;
+            justify-content: center;
+            margin: 20px 0;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 90%;
+            max-width: 1000px;
+            margin: 0 auto;
+            background-color: white;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        th,
+        td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: center;
+        }
+
+        th {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        #validatorOnlineTable>tr>td {
+            text-align: left;
+        }
+    </style>
 </head>
 
 <body>
     <h1>Nimiq Validator Migration Readiness Monitor</h1>
-    <p>Consensus status of PoW Node: <span id="nodeConsensus">Unknown</span></p>
-    <p>Total stake: <span id="totalStake">Unknown</span></p>
+    <p>
+        Consensus status of PoW Node: <span id="nodeConsensus">Unknown</span> | Total stake: <span
+            id="totalStake">Unknown</span>
+    </p>
 
     <h2>Online (<span id="percentageOnline">0</span>%)</h2>
-    <h3>Validators indicated they're ready between 16th and 19th of Nov</h3>
-    <table>
-        <tbody id="validatorOnlineTable">
-        </tbody>
-    </table>
+    <h3>Validators which are online, indicate they are ready to migrate when the first Activation Window opens.</h3>
+    <div class="table-container">
+        <table>
+            <tbody id="validatorOnlineTable">
+            </tbody>
+        </table>
+    </div>
 
     <h2>Ready</h2>
-    <h3>Validator is ready during the Activation Phase</h3>
-    <table>
-        <thead>
-            <tr id="readyTableHeader">
-                <td>Validator</td>
-            </tr>
-        </thead>
-        <tbody id="validatorReadyTable">
-
-        </tbody>
-    </table>
+    <h3>Validator is ready during the Activation Phase.</h3>
+    <h4>If more than 80% of a block window is ready, the PoS chain will launch 🚀</h4>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr id="readyTableHeader">
+                    <th>Validator</th>
+                </tr>
+            </thead>
+            <tbody id="validatorReadyTable">
+            </tbody>
+        </table>
+    </div>
 </body>
-
-<style>
-    th,
-    td {
-        border: 1px solid black;
-    }
-
-    td {
-        padding: 10px;
-    }
-</style>
 
 <script>
     const nodeConsensusEl = document.getElementById('nodeConsensus');
@@ -169,19 +230,21 @@
     function validatorOnlineColumn(validator) {
         const validatorOnline = isValidatorOnline(validator.transactions);
 
-        const headerCell = document.createElement('tr');
-        headerCell.innerHTML = `
+        const row = document.createElement('tr');
+        const column = document.createElement('td');
+        column.innerHTML = `
         <a href="http://nimiq.watch/#${validator.address}" target="_blank" style="color:blue;">${shortenAddress(validator.address)}</a>
         with a stake of ${lunaToNim(validator.deposit + validator.delegatedStake)} NIM (${validator.portion.toFixed(2)}%)
         `
         if (validatorOnline[0]) {
-            headerCell.innerHTML += `is marked as <b><span style="color: green">online</span></b> on ${new Date(validatorOnline[1]).toUTCString()}`
+            column.innerHTML += `is marked as <b><span style="color: green">online</span></b>. Last heartbeat: ${new Date(validatorOnline[1]).toLocaleString()}`
             percentageOnline += validator.portion
         } else {
-            headerCell.innerHTML += `is marked as <b><span style="color: red">offline</span></b>`
+            column.innerHTML += `is marked as <b><span style="color: red">offline</span></b>`
         }
 
-        validatorOnlineTable.appendChild(headerCell);
+        row.appendChild(column);
+        validatorOnlineTable.appendChild(row);
     }
 
     function validatorReadyColumn(validator) {
@@ -194,13 +257,13 @@
             const readyTxn = isValidatorReady(validator.transactions, start, end);
             const readyColumn = document.createElement('td');
             if (!readyTxn) {
-                readyColumn.innerHTML = `<center><span style="background-color: red">X</span></center>`;
+                readyColumn.innerHTML = `<center>Not ready</center>`;
             } else {
                 readyColumn.innerHTML = `
                 <center>
                     <a href="http://nimiq.watch/#${readyTxn.hash}" target="_blank">
-                        <span style="background-color: #52CC7A; color: black">
-                            ${readyTxn.data.substring(0, 20)}
+                        <span style="color: black">
+                            Ready: ${readyTxn.data.substring(0, 20)}
                         </span>
                     </>
                 </center>

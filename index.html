@@ -9,7 +9,7 @@
         body {
             font-family: Arial, sans-serif;
             background-color: #f5f5f5;
-            color: #333;
+            color: #1F2348;
             margin: 0;
             padding: 0;
         }
@@ -19,11 +19,11 @@
         h3,
         h4 {
             text-align: center;
-            color: #333;
+            color: #1F2348;
         }
 
         h1 {
-            background-color: #4CAF50;
+            background-color: #21BCA5;
             color: white;
             padding: 20px 0;
             margin: 0;
@@ -63,7 +63,7 @@
         }
 
         th {
-            background-color: #4CAF50;
+            background-color: #21BCA5;
             color: white;
         }
 
@@ -210,14 +210,14 @@
         const row = document.createElement('tr');
         const column = document.createElement('td');
         column.innerHTML = `
-        <a href="http://nimiq.watch/#${validator.address}" target="_blank" style="color:blue;">${shortenAddress(validator.address)}</a>
+        <a href="http://nimiq.watch/#${validator.address}" target="_blank" style="color: #0582CA;">${shortenAddress(validator.address)}</a>
         with a stake of ${lunaToNim(validator.deposit + validator.delegatedStake)} NIM (${validator.portion.toFixed(2)}%)
         `
         if (validatorOnline[0]) {
-            column.innerHTML += `is marked as <b><span style="color: green">online</span></b>. Last heartbeat: ${new Date(validatorOnline[1]).toLocaleString()}`
+            column.innerHTML += `is marked as <b><span style="color: #41A38E">online</span></b>. Last heartbeat: ${new Date(validatorOnline[1]).toLocaleString()}`
             percentageOnline += validator.portion
         } else {
-            column.innerHTML += `is marked as <b><span style="color: red">offline</span></b>`
+            column.innerHTML += `is marked as <b><span style="color: #CC3047">offline</span></b>`
         }
 
         row.appendChild(column);

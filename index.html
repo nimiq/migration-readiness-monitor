@@ -82,6 +82,7 @@
 
     <h2>Online (<span id="percentageOnline">0</span>%)</h2>
     <h3>Validators which are online, indicate they are ready to migrate when the first Activation Window opens.</h3>
+    <h3>The first online validators are expected on the 16th of Nov.</h3>
     <div class="table-container">
         <table>
             <tbody id="validatorOnlineTable">
@@ -149,7 +150,6 @@
         const info = await (await fetch('https://api.zeromox.com/api/info')).json();
         nodeConsensusEl.innerText = info.consensus;
         validators = info.validators;
-        validators = validators.sort((a, b) => b.delegatedStake - a.delegatedStake);
 
         validators.forEach(validator => {
             totalStake += validator.delegatedStake + validator.deposit;
@@ -215,10 +215,10 @@
         with a stake of ${lunaToNim(validator.deposit + validator.delegatedStake)} NIM (${validator.portion.toFixed(2)}%)
         `
         if (validatorOnline[0]) {
-            column.innerHTML += `is marked as <b><span style="color: #41A38E">online</span></b>. Last heartbeat: ${new Date(validatorOnline[1]).toLocaleString()}`
+            column.innerHTML += `is <b><span style="color: #41A38E">online</span></b>. Last heartbeat: ${new Date(validatorOnline[1]).toLocaleString()}`
             percentageOnline += validator.portion
         } else {
-            column.innerHTML += `is marked as <b><span style="color: #CC3047">offline</span></b>`
+            column.innerHTML += `is <b><span style="color: #CC3047">offline</span></b>`
         }
 
         row.appendChild(column);

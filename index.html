@@ -176,10 +176,10 @@
         const genesis_hashes_list = Object.entries(genesis_hashes).sort((a, b) => {
             b[1] - a[1]
         })
-        genesis_hashes_list.forEach((hash) => {
+        genesis_hashes_list.forEach(([hash, percentage]) => {
             const row = document.createElement('tr');
             const column = document.createElement('td');
-            column.innerHTML = `${hash[0].substring(0, 50)}... with ${hash[1]}%`;
+            column.innerHTML = `${hash.substring(0, 50)}... with ${percentage}%`;
             row.appendChild(column);
             genesisPopularityTable.appendChild(row);
         })
@@ -209,10 +209,10 @@
                 && txn.data === "6f6e6c696e65") // "online"
 
         if (txns.length > 0) {
-            return [true, txns[0].timestamp * 1000]
+            return { online: true, heartbeat: txns[0].timestamp * 1000 }
         }
 
-        return [false, null]
+        return { online: false, heartbeat: null }
     }
 
     function isValidatorReady(txns, startWindow, endWindow) {
@@ -228,7 +228,7 @@
     }
 
     function validatorOnlineColumn(validator) {
-        const validatorOnline = isValidatorOnline(validator.transactions);
+        const { online, heartbeat } = isValidatorOnline(validator.transactions);
 
         const row = document.createElement('tr');
         const column = document.createElement('td');
@@ -236,8 +236,8 @@
         <a href="http://nimiq.watch/#${validator.address}" target="_blank" style="color: #0582CA;">${shortenAddress(validator.address)}</a>
         with a stake of ${lunaToNim(validator.deposit + validator.delegatedStake)} NIM (${validator.portion.toFixed(2)}%)
         `
-        if (validatorOnline[0]) {
-            column.innerHTML += `is <b><span style="color: #41A38E">online</span></b>. Last heartbeat: ${new Date(validatorOnline[1]).toLocaleString()}`
+        if (online) {
+            column.innerHTML += `is <b><span style="color: #41A38E">online</span></b>. Last heartbeat: ${new Date(heartbeat).toLocaleString()}`
             percentageOnline += validator.portion
         } else {
             column.innerHTML += `is <b><span style="color: #CC3047">offline</span></b>`

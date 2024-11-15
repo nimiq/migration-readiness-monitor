@@ -170,7 +170,7 @@ function isValidatorReady(txns, startWindow, endWindow) {
     return /** @type {Transaction & { data: string } | undefined} */ (txns.find((txn) =>
         txn.to === "0000000000000000000000000000000000000000" // Burn address
         && txn.value === 1
-        && txn.data && txn.data.length === 128
+        && txn.data && txn.data.length === 64
         && txn.blockNumber >= startWindow
         && txn.blockNumber <= endWindow
     ))

@@ -114,6 +114,19 @@ windows.forEach((window) => {
         $genesisPopularityTable.appendChild(row);
     })
     $percentageReady.innerText = genesis_hashes_list[0][1].toFixed(2);
+
+    // Mark the most popular genesis hash cells
+    const cells = document.querySelectorAll('.ready-cell');
+    cells.forEach(cell => {
+        const hash = cell.querySelector('center')?.dataset.genesisHash;
+        if (hash === genesis_hashes_list[0][0]) {
+            cell.style.backgroundColor = '#88B04B';
+        } else if (hash) {
+            cell.style.backgroundColor = '#D94432';
+        } else {
+            cell.style.backgroundColor = 'none';
+        }
+    })
 })()
 
 /**
@@ -205,12 +218,13 @@ function validatorOnlineRow(validator) {
 function validatorReadyRow(validator) {
     const row = document.createElement('tr')
     const addressColumn = document.createElement('td');
-    addressColumn.innerHTML = `<a href="http://nimiq.watch/#${validator.address}" target="_blank" style="color:blue;">${shortenAddress(validator.address)}</a> (${validator.portion.toFixed(2)}%)`;
+    addressColumn.innerHTML = `<a href="http://nimiq.watch/#${validator.address}" target="_blank" style="color: #0582CA;">${shortenAddress(validator.address)}</a>&nbsp;(${validator.portion.toFixed(2)}%)`;
     row.appendChild(addressColumn)
 
     windows.forEach((window, index) => {
         const readyTxn = isValidatorReady(validator.transactions, window.start, window.end);
         const readyCell = document.createElement('td');
+        readyCell.classList.add('ready-cell');
         if (!readyTxn) {
             readyCell.innerHTML = `<center style="color: #888">Not ready</center>`;
         } else {
@@ -221,7 +235,7 @@ function validatorReadyRow(validator) {
             }
 
             readyCell.innerHTML = `
-            <center>
+            <center data-genesis-hash="${readyTxn.data}">
                 <a href="http://nimiq.watch/#${readyTxn.hash}" target="_blank">
                     <span style="color: black">
                         ${readyTxn.data.substring(0, 4)}...${readyTxn.data.substring(60, 64)}

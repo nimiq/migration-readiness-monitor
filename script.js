@@ -75,7 +75,10 @@ const windows = [
     }
 ];
 
-/** @type {Record<string, number>} */
+/**
+ * Stores the genesis hashes and their popularity per window start block
+ * @type {Record<number, Record<string, number>>}
+ */
 let genesis_hashes = {};
 
 /** @type {Validator[]} */
@@ -124,30 +127,44 @@ async function getData() {
     };
 
     $totalStake.innerText = lunaToNim(totalStake);
-    const genesis_hashes_list = Object.entries(genesis_hashes)
-        .sort(([hash_a, percentage_a], [hash_b, percentage_b]) => percentage_b - percentage_a)
-    genesis_hashes_list.forEach(([hash, percentage]) => {
-        const row = document.createElement('tr');
-        const column = document.createElement('td');
-        column.innerHTML = `${hash.substring(0, 50)}... with ${percentage.toFixed(2)}%`;
-        row.appendChild(column);
-        $genesisPopularityTable.appendChild(row);
-    })
-    $percentageReady.innerText = genesis_hashes_list[0][1].toFixed(2);
+    const hashes_list_by_window = (Object.entries(genesis_hashes)
+        .map(([window_start, genesis_hashes]) => {
+            const genesis_hashes_list = Object.entries(genesis_hashes)
+                .sort(([hash_a, percentage_a], [hash_b, percentage_b]) => percentage_b - percentage_a);
+            return {
+                start: window_start,
+                hashes: genesis_hashes_list,
+            };
+        }));
 
-    // Mark the most popular genesis hash cells
-    /** @type {NodeListOf<HTMLElement>} */
-    const cells = document.querySelectorAll('.ready-cell');
-    cells.forEach(cell => {
-        const hash = cell.querySelector('center')?.dataset.genesisHash;
-        if (hash === genesis_hashes_list[0][0]) {
-            cell.style.backgroundColor = '#88B04B';
-        } else if (hash) {
-            cell.style.backgroundColor = '#D94432';
-        } else {
-            cell.style.backgroundColor = 'none';
-        }
-    })
+    // Populate popularity table
+    const latest_hashes = hashes_list_by_window.at(-1);
+    if (latest_hashes) {
+        latest_hashes.hashes.forEach(([hash, percentage]) => {
+            const row = document.createElement('tr');
+            const column = document.createElement('td');
+            column.innerHTML = `${hash.substring(0, 50)}... with ${percentage.toFixed(2)}%`;
+            row.appendChild(column);
+            $genesisPopularityTable.appendChild(row);
+        })
+        $percentageReady.innerText = latest_hashes.hashes[0][1].toFixed(2) || '0';
+    }
+
+    // Mark the most popular genesis hash cells per window
+    for (const { start, hashes } of hashes_list_by_window) {
+        /** @type {NodeListOf<HTMLElement>} */
+        const cells = document.querySelectorAll('.ready-cell[data-window-start="' + start + '"]');
+        cells.forEach(cell => {
+            const hash = cell.querySelector('center')?.dataset.genesisHash;
+            if (hash === hashes[0][0]) {
+                cell.style.backgroundColor = '#88B04B';
+            } else if (hash) {
+                cell.style.backgroundColor = '#D94432';
+            } else {
+                cell.style.backgroundColor = 'none';
+            }
+        });
+    }
 }
 
 getData();
@@ -249,15 +266,18 @@ function validatorReadyRow(validator) {
         const readyTxn = isValidatorReady(validator.transactions, window.start, window.end);
         const readyCell = document.createElement('td');
         readyCell.classList.add('ready-cell');
+        readyCell.dataset.windowStart = window.start.toString();
         if (!readyTxn) {
             readyCell.innerHTML = `<center style="color: #888">Not ready</center>`;
         } else {
             $onlineSection.style.display = 'none';
-            if (genesis_hashes.hasOwnProperty(readyTxn.data)) {
-                genesis_hashes[readyTxn.data] += validator.portion;
+            const window_genesis_hashes = genesis_hashes[window.start] || {};
+            if (window_genesis_hashes.hasOwnProperty(readyTxn.data)) {
+                window_genesis_hashes[readyTxn.data] += validator.portion;
             } else {
-                genesis_hashes[readyTxn.data] = validator.portion;
+                window_genesis_hashes[readyTxn.data] = validator.portion;
             }
+            genesis_hashes[window.start] = window_genesis_hashes;
 
             readyCell.innerHTML = `
             <center data-genesis-hash="${readyTxn.data}">

@@ -80,38 +80,44 @@
             id="totalStake">Unknown</span>
     </p>
 
-    <h2>Online (<span id="percentageOnline">0</span>%)</h2>
-    <h3>Validators which are online, indicate they are ready to migrate when the first Activation Window opens.</h3>
-    <h3>The first online validators are expected on the 16th of Nov.</h3>
-    <div class="table-container">
-        <table>
-            <tbody id="validatorOnlineTable">
-            </tbody>
-        </table>
-    </div>
+    <section class="online">
+        <h2>Online (<span id="percentageOnline">0</span>%)</h2>
+        <h3>Validators which are online, indicate they are ready to migrate when the first Activation Window opens.</h3>
+        <h3>The first online validators are expected on the 16th of Nov.</h3>
+        <div class="table-container">
+            <table>
+                <tbody id="validatorOnlineTable">
+                </tbody>
+            </table>
+        </div>
+    </section>
 
-    <h2>Ready (<span id="percentageReady">0</span>%)</h2>
-    <h3>Validator is ready during the Activation Phase.</h3>
-    <h4>If more than 80% of a block window is ready, the PoS chain will launch 🚀</h4>
-    <div class="table-container">
-        <table>
-            <thead>
-                <tr id="readyTableHeader">
-                    <th>Validator</th>
-                </tr>
-            </thead>
-            <tbody id="validatorReadyTable">
-            </tbody>
-        </table>
-    </div>
+    <section class="ready">
+        <h2>Ready (<span id="percentageReady">0</span>%)</h2>
+        <h3>Validator is ready during the Activation Phase.</h3>
+        <h4>If more than 80% of a block window is ready, the PoS chain will launch 🚀</h4>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr id="readyTableHeader">
+                        <th>Validator</th>
+                    </tr>
+                </thead>
+                <tbody id="validatorReadyTable">
+                </tbody>
+            </table>
+        </div>
+    </section>
 
-    <h2>Genesis Hash popularity</h2>
-    <div class="table-container">
-        <table>
-            <tbody id="genesisPopularityTable">
-            </tbody>
-        </table>
-    </div>
+    <section class="popularity">
+        <h2>Genesis Hash popularity</h2>
+        <div class="table-container">
+            <table>
+                <tbody id="genesisPopularityTable">
+                </tbody>
+            </table>
+        </div>
+    </section>
 </body>
 
 <script src="script.js"></script>

@@ -35,11 +35,17 @@
 
 const $nodeConsensus = /** @type {HTMLElement} */ (document.getElementById('nodeConsensus'));
 const $totalStake = /** @type {HTMLElement} */ (document.getElementById('totalStake'));
+
+const $onlineSection = /** @type {HTMLElement} */ (document.querySelector('section.online'));
 const $percentageOnline = /** @type {HTMLElement} */ (document.getElementById('percentageOnline'));
 const $validatorOnlineTable = /** @type {HTMLElement} */ (document.getElementById('validatorOnlineTable'));
+
+const $readySection = /** @type {HTMLElement} */ (document.querySelector('section.ready'));
 const $readyTableHeader = /** @type {HTMLElement} */ (document.getElementById('readyTableHeader'));
 const $percentageReady = /** @type {HTMLElement} */ (document.getElementById('percentageReady'));
 const $validatorReadyTable = /** @type {HTMLElement} */ (document.getElementById('validatorReadyTable'));
+
+const $popularitySection = /** @type {HTMLElement} */ (document.querySelector('section.popularity'));
 const $genesisPopularityTable = /** @type {HTMLElement} */ (document.getElementById('genesisPopularityTable'));
 
 const windows = [
@@ -228,6 +234,7 @@ function validatorReadyRow(validator) {
         if (!readyTxn) {
             readyCell.innerHTML = `<center style="color: #888">Not ready</center>`;
         } else {
+            $onlineSection.style.display = 'none';
             if (genesis_hashes.hasOwnProperty(readyTxn.data)) {
                 genesis_hashes[readyTxn.data] += validator.portion;
             } else {

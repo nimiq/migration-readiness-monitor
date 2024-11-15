@@ -87,15 +87,29 @@ let percentageReady = 0;
 
 windows.forEach((window) => {
     const el = document.createElement('td');
-    el.innerText = `Block window ${window.start} - ${window.end}`;
+    el.innerText = `#${window.start} - #${window.end}`;
     $readyTableHeader.appendChild(el)
 });
 
-(async () => {
+async function getData() {
+    // Reset all working variables
+    genesis_hashes = {};
+    validators = [];
+
+    totalStake = 0;
+    percentageOnline = 0;
+    percentageReady = 0;
+
     /**
      * @type {Info}
      */
     const info = await (await fetch('https://api.zeromox.com/api/info')).json();
+
+    // Reset tables
+    $validatorOnlineTable.innerHTML = '';
+    $validatorReadyTable.innerHTML = '';
+    $genesisPopularityTable.innerHTML = '';
+
     $nodeConsensus.innerText = info.consensus;
     validators = info.validators;
 
@@ -122,6 +136,7 @@ windows.forEach((window) => {
     $percentageReady.innerText = genesis_hashes_list[0][1].toFixed(2);
 
     // Mark the most popular genesis hash cells
+    /** @type {NodeListOf<HTMLElement>} */
     const cells = document.querySelectorAll('.ready-cell');
     cells.forEach(cell => {
         const hash = cell.querySelector('center')?.dataset.genesisHash;
@@ -133,7 +148,10 @@ windows.forEach((window) => {
             cell.style.backgroundColor = 'none';
         }
     })
-})()
+}
+
+getData();
+setInterval(getData, 60e3); // Update every minute
 
 /**
  * @param {string} address

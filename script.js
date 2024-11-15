@@ -1,9 +1,47 @@
 // @ts-check
 
-const nodeConsensusEl = document.getElementById('nodeConsensus');
-const totalStakeEl = document.getElementById('totalStake');
-const percentageOnlineEl = document.getElementById('percentageOnline');
-const percentageReadyEl = document.getElementById('percentageReady');
+/**
+ * @typedef {{
+*  hash: string,
+*  blockHash: string,
+*  blockNumber: number,
+*  timestamp: number,
+*  confirmations: number,
+*  from: string,
+*  fromAddress: string,
+*  to: string,
+*  toAddress: string,
+*  value: number,
+*  fee: number,
+*  data: string | null,
+*  proof: string,
+*  flags: number,
+* }} Transaction
+*
+* @typedef {{
+*  address: string,
+*  deposit: number,
+*  delegatedStake: number,
+*  portion: number,
+*  transactions: Transaction[],
+* }} Validator
+*
+* @typedef {{
+*  consensus: string,
+*  totalStake: number,
+*  validators: Validator[],
+* }} Info
+*/
+
+const $nodeConsensus = /** @type {HTMLElement} */ (document.getElementById('nodeConsensus'));
+const $totalStake = /** @type {HTMLElement} */ (document.getElementById('totalStake'));
+const $percentageOnline = /** @type {HTMLElement} */ (document.getElementById('percentageOnline'));
+const $validatorOnlineTable = /** @type {HTMLElement} */ (document.getElementById('validatorOnlineTable'));
+const $readyTableHeader = /** @type {HTMLElement} */ (document.getElementById('readyTableHeader'));
+const $percentageReady = /** @type {HTMLElement} */ (document.getElementById('percentageReady'));
+const $validatorReadyTable = /** @type {HTMLElement} */ (document.getElementById('validatorReadyTable'));
+const $genesisPopularityTable = /** @type {HTMLElement} */ (document.getElementById('genesisPopularityTable'));
+
 const windows = [
     {
         start: 3456000,
@@ -30,8 +68,13 @@ const windows = [
         end: 3464640
     }
 ];
+
+/** @type {Record<string, number>} */
 let genesis_hashes = {};
+
+/** @type {Validator[]} */
 let validators = [];
+
 let totalStake = 0;
 let percentageOnline = 0;
 let percentageReady = 0;
@@ -39,12 +82,15 @@ let percentageReady = 0;
 windows.forEach((window) => {
     const el = document.createElement('td');
     el.innerText = `Block window ${window.start} - ${window.end}`;
-    readyTableHeader.appendChild(el)
+    $readyTableHeader.appendChild(el)
 });
 
 (async () => {
+    /**
+     * @type {Info}
+     */
     const info = await (await fetch('https://api.zeromox.com/api/info')).json();
-    nodeConsensusEl.innerText = info.consensus;
+    $nodeConsensus.innerText = info.consensus;
     validators = info.validators;
 
     validators.forEach(validator => {
@@ -52,39 +98,52 @@ windows.forEach((window) => {
     });
 
     for await (const validator of validators) {
-        validatorOnlineColumn(validator);
-        validatorReadyColumn(validator);
-        percentageOnlineEl.innerText = percentageOnline.toFixed(2);
+        validatorOnlineRow(validator);
+        validatorReadyRow(validator);
+        $percentageOnline.innerText = percentageOnline.toFixed(2);
     };
 
-    totalStakeEl.innerText = lunaToNim(totalStake);
-    const genesis_hashes_list = Object.entries(genesis_hashes).sort((a, b) => {
-        b[1] - a[1]
-    })
+    $totalStake.innerText = lunaToNim(totalStake);
+    const genesis_hashes_list = Object.entries(genesis_hashes)
+        .sort(([hash_a, percentage_a], [hash_b, percentage_b]) => percentage_b - percentage_a)
     genesis_hashes_list.forEach(([hash, percentage]) => {
         const row = document.createElement('tr');
         const column = document.createElement('td');
         column.innerHTML = `${hash.substring(0, 50)}... with ${percentage}%`;
         row.appendChild(column);
-        genesisPopularityTable.appendChild(row);
+        $genesisPopularityTable.appendChild(row);
     })
-    percentageReadyEl.innerText = genesis_hashes_list[0][1].toFixed(2);
+    $percentageReady.innerText = genesis_hashes_list[0][1].toFixed(2);
 })()
 
+/**
+ * @param {string} address
+ */
 function shortenAddress(address) {
     const parts = address.split(" ");
     return `${parts[0]}...${parts[parts.length - 1]}`;
 }
 
+/**
+ * @param {number} amount
+ */
 function lunaToNim(amount) {
     return prettyNumber(amount / 1e5);
 }
 
+/**
+ * @param {number} number
+ */
 function prettyNumber(number) {
     const roundedNumber = Math.round(number);
     return roundedNumber.toString().replace(/\B(?=(\d{3})+(?!\d))/g, "'");
 }
 
+/**
+ *
+ * @param {Transaction[]} txns
+ * @returns {{ online: true, heartbeat: number } | { online: false, heartbeat: null }}
+ */
 function isValidatorOnline(txns) {
     txns = txns
         .filter((txn) =>
@@ -100,19 +159,27 @@ function isValidatorOnline(txns) {
     return { online: false, heartbeat: null }
 }
 
+/**
+ *
+ * @param {Transaction[]} txns
+ * @param {number} startWindow
+ * @param {number} endWindow
+ * @returns {Transaction & { data: string } | undefined}
+ */
 function isValidatorReady(txns, startWindow, endWindow) {
-    let readyTxn = txns.find((txn) =>
+    return /** @type {Transaction & { data: string } | undefined} */ (txns.find((txn) =>
         txn.to === "0000000000000000000000000000000000000000" // Burn address
         && txn.value === 1
-        && txn.data.length === 128
+        && txn.data && txn.data.length === 128
         && txn.blockNumber >= startWindow
         && txn.blockNumber <= endWindow
-    )
-
-    return readyTxn;
+    ))
 }
 
-function validatorOnlineColumn(validator) {
+/**
+ * @param {Validator} validator
+ */
+function validatorOnlineRow(validator) {
     const { online, heartbeat } = isValidatorOnline(validator.transactions);
 
     const row = document.createElement('tr');
@@ -129,10 +196,13 @@ function validatorOnlineColumn(validator) {
     }
 
     row.appendChild(column);
-    validatorOnlineTable.appendChild(row);
+    $validatorOnlineTable.appendChild(row);
 }
 
-function validatorReadyColumn(validator) {
+/**
+ * @param {Validator} validator
+ */
+function validatorReadyRow(validator) {
     const row = document.createElement('tr')
     const addressColumn = document.createElement('td');
     addressColumn.innerHTML = `<a href="http://nimiq.watch/#${validator.address}" target="_blank" style="color:blue;">${shortenAddress(validator.address)}</a> (${validator.portion.toFixed(2)}%)`;
@@ -163,5 +233,5 @@ function validatorReadyColumn(validator) {
         row.appendChild(readyColumn);
     })
 
-    validatorReadyTable.appendChild(row)
+    $validatorReadyTable.appendChild(row)
 }

@@ -90,7 +90,7 @@
         </table>
     </div>
 
-    <h2>Ready</h2>
+    <h2>Ready (<span id="percentageReady">0</span>%)</h2>
     <h3>Validator is ready during the Activation Phase.</h3>
     <h4>If more than 80% of a block window is ready, the PoS chain will launch 🚀</h4>
     <div class="table-container">
@@ -118,6 +118,7 @@
     const nodeConsensusEl = document.getElementById('nodeConsensus');
     const totalStakeEl = document.getElementById('totalStake');
     const percentageOnlineEl = document.getElementById('percentageOnline');
+    const percentageReadyEl = document.getElementById('percentageReady');
     const windows = [
         {
             start: 3456000,
@@ -148,6 +149,7 @@
     let validators = [];
     let totalStake = 0;
     let percentageOnline = 0;
+    let percentageReady = 0;
 
     windows.forEach((window) => {
         const el = document.createElement('td');
@@ -171,16 +173,17 @@
         };
 
         totalStakeEl.innerText = lunaToNim(totalStake);
-        genesis_hashes = Object.entries(genesis_hashes).sort((a, b) => {
+        const genesis_hashes_list = Object.entries(genesis_hashes).sort((a, b) => {
             b[1] - a[1]
         })
-        genesis_hashes.forEach((hash) => {
+        genesis_hashes_list.forEach((hash) => {
             const row = document.createElement('tr');
             const column = document.createElement('td');
             column.innerHTML = `${hash[0].substring(0, 50)}... with ${hash[1]}%`;
             row.appendChild(column);
             genesisPopularityTable.appendChild(row);
         })
+        percentageReadyEl.innerText = genesis_hashes_list[0][1].toFixed(2);
     })()
 
     function shortenAddress(address) {

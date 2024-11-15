@@ -109,7 +109,7 @@ windows.forEach((window) => {
     genesis_hashes_list.forEach(([hash, percentage]) => {
         const row = document.createElement('tr');
         const column = document.createElement('td');
-        column.innerHTML = `${hash.substring(0, 50)}... with ${percentage}%`;
+        column.innerHTML = `${hash.substring(0, 50)}... with ${percentage.toFixed(2)}%`;
         row.appendChild(column);
         $genesisPopularityTable.appendChild(row);
     })
@@ -210,9 +210,9 @@ function validatorReadyRow(validator) {
 
     windows.forEach((window, index) => {
         const readyTxn = isValidatorReady(validator.transactions, window.start, window.end);
-        const readyColumn = document.createElement('td');
+        const readyCell = document.createElement('td');
         if (!readyTxn) {
-            readyColumn.innerHTML = `<center>Not ready</center>`;
+            readyCell.innerHTML = `<center style="color: #888">Not ready</center>`;
         } else {
             if (genesis_hashes.hasOwnProperty(readyTxn.data)) {
                 genesis_hashes[readyTxn.data] += validator.portion;
@@ -220,17 +220,17 @@ function validatorReadyRow(validator) {
                 genesis_hashes[readyTxn.data] = validator.portion;
             }
 
-            readyColumn.innerHTML = `
+            readyCell.innerHTML = `
             <center>
                 <a href="http://nimiq.watch/#${readyTxn.hash}" target="_blank">
                     <span style="color: black">
-                        Ready: ${readyTxn.data.substring(0, 10)}...
+                        ${readyTxn.data.substring(0, 4)}...${readyTxn.data.substring(60, 64)}
                     </span>
                 </>
             </center>
             `;
         }
-        row.appendChild(readyColumn);
+        row.appendChild(readyCell);
     })
 
     $validatorReadyTable.appendChild(row)

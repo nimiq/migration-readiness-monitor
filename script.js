@@ -243,7 +243,13 @@ function validatorOnlineRow(validator) {
     with a stake of ${lunaToNim(validator.deposit + validator.delegatedStake)} NIM (${validator.portion.toFixed(2)}%)
     `
     if (online) {
-        column.innerHTML += `is <b><span style="color: #41A38E">online</span></b>. Last heartbeat: ${new Date(heartbeat).toLocaleString()}`
+        const hoursSinceHeartbeat = (Date.now() - heartbeat) / 1e3 / 60 / 60;
+        let color = '#41A38E'; // green
+        if (hoursSinceHeartbeat > 3) color = '#FC8702'; // orange
+        if (hoursSinceHeartbeat > 6) color = '#CC3047'; // red
+
+        const ago = /** @type {{format: (date: number|Date|string) => string}} */ (timeago).format(heartbeat);
+        column.innerHTML += `was <b><span style="color: ${color}">online ${ago}</span></b> <small>${new Date(heartbeat).toLocaleString()}</small>`
         percentageOnline += validator.portion
     } else {
         column.innerHTML += `is <b><span style="color: #CC3047">offline</span></b>`

@@ -202,7 +202,7 @@ function isValidatorOnline(txns) {
     txns = txns
         .filter((txn) =>
             txn.to === "0000000000000000000000000000000000000000" // Burn address
-            && txn.blockNumber >= 3449700 // Filter out fake positives. Fixed in PR 3035
+            && txn.blockNumber >= 3451680 // Only consider online transaction 3 windows before first transition block
             && txn.value === 1
             && txn.data === "6f6e6c696e65") // "online"
 

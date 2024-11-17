@@ -196,7 +196,7 @@ function prettyNumber(number) {
 /**
  *
  * @param {Transaction[]} txns
- * @returns {{ online: true, heartbeat: number } | { online: false, heartbeat: null }}
+ * @returns {{ online: true, heartbeat: number, version?: string } | { online: false, heartbeat?: undefined, version?: undefined }}
  */
 function isValidatorOnline(txns) {
     txns = txns
@@ -204,13 +204,26 @@ function isValidatorOnline(txns) {
             txn.to === "0000000000000000000000000000000000000000" // Burn address
             && txn.blockNumber >= 3451680 // Only consider online transaction 3 windows before first transition block
             && txn.value === 1
-            && txn.data.startsWith("6f6e6c696e65")) // "online"
+            && txn.data && txn.data.startsWith("6f6e6c696e65")) // "online"
 
     if (txns.length > 0) {
-        return { online: true, heartbeat: txns[0].timestamp * 1000 }
+        const latestTxn = txns[0];
+        const data = latestTxn.data;
+
+        /** @type {string | undefined} */
+        let version;
+        const versionHex = data?.substring(14); // "online "
+        if (versionHex) {
+            const versionBytes = Uint8Array.from(
+                /** @type {RegExpMatchArray} */ (versionHex.match(/.{1,2}/g)).map((byte) => parseInt(byte, 16)),
+            );
+            version = new TextDecoder().decode(versionBytes);
+        }
+
+        return { online: true, heartbeat: latestTxn.timestamp * 1000, version }
     }
 
-    return { online: false, heartbeat: null }
+    return { online: false }
 }
 
 /**
@@ -234,7 +247,7 @@ function isValidatorReady(txns, startWindow, endWindow) {
  * @param {Validator} validator
  */
 function validatorOnlineRow(validator) {
-    const { online, heartbeat } = isValidatorOnline(validator.transactions);
+    const { online, heartbeat, version } = isValidatorOnline(validator.transactions);
 
     const row = document.createElement('tr');
     const column = document.createElement('td');
@@ -249,7 +262,7 @@ function validatorOnlineRow(validator) {
         if (hoursSinceHeartbeat >= 6) color = '#CC3047'; // red
 
         const ago = /** @type {{format: (date: number|Date|string) => string}} */ (timeago).format(heartbeat);
-        column.innerHTML += `was <b><span style="color: ${color}">online ${ago}</span></b> <small>${new Date(heartbeat).toLocaleString()}</small>`
+        column.innerHTML += `was <b><span style="color: ${color}">online ${ago}</span></b> <small>${version ? `[${version}] ` : ''}${new Date(heartbeat).toLocaleString()}</small>`
         if (hoursSinceHeartbeat < 3) {
             percentageOnline += validator.portion
         }

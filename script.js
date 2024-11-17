@@ -204,7 +204,7 @@ function isValidatorOnline(txns) {
             txn.to === "0000000000000000000000000000000000000000" // Burn address
             && txn.blockNumber >= 3451680 // Only consider online transaction 3 windows before first transition block
             && txn.value === 1
-            && txn.data === "6f6e6c696e65") // "online"
+            && txn.data.startsWith("6f6e6c696e65")) // "online"
 
     if (txns.length > 0) {
         return { online: true, heartbeat: txns[0].timestamp * 1000 }

@@ -88,6 +88,25 @@
             0% { width: 0%; }
             100% { width: 100%; }
         }
+
+        #validatorReadyTable {
+            display: flex;
+            flex-direction: row;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .ready-cell {
+            flex-grow: 1;
+            width: 10%;
+            background: white;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0.5rem;
+        }
     </style>
 </head>
 
@@ -114,17 +133,8 @@
         <h2>Ready (<span id="percentageReady">0</span>%)</h2>
         <h3>Validators that are ready to migrate.</h3>
         <h4>When more than 80% of stake is ready in an activation window, the PoS chain will start 🚀</h4>
-        <div class="table-container">
-            <table>
-                <thead>
-                    <tr id="readyTableHeader">
-                        <th>Validator</th>
-                    </tr>
-                </thead>
-                <tbody id="validatorReadyTable">
-                </tbody>
-            </table>
-        </div>
+
+        <div id="validatorReadyTable"></div>
     </section>
 
     <section class="popularity">

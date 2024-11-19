@@ -53,26 +53,26 @@ const windows = [
         start: 3456000,
         end: 3457440
     },
-    {
-        start: 3457440,
-        end: 3458880
-    },
-    {
-        start: 3458880,
-        end: 3460320
-    },
-    {
-        start: 3460320,
-        end: 3461760
-    },
-    {
-        start: 3461760,
-        end: 3463200
-    },
-    {
-        start: 3463200,
-        end: 3464640
-    }
+    // {
+    //     start: 3457440,
+    //     end: 3458880
+    // },
+    // {
+    //     start: 3458880,
+    //     end: 3460320
+    // },
+    // {
+    //     start: 3460320,
+    //     end: 3461760
+    // },
+    // {
+    //     start: 3461760,
+    //     end: 3463200
+    // },
+    // {
+    //     start: 3463200,
+    //     end: 3464640
+    // }
 ];
 
 /**
@@ -88,11 +88,11 @@ let totalStake = 0;
 let percentageOnline = 0;
 let percentageReady = 0;
 
-windows.forEach((window) => {
-    const el = document.createElement('td');
-    el.innerText = `#${window.start} - #${window.end}`;
-    $readyTableHeader.appendChild(el)
-});
+// windows.forEach((window) => {
+//     const el = document.createElement('td');
+//     el.innerText = `#${window.start} - #${window.end}`;
+//     $readyTableHeader.appendChild(el)
+// });
 
 async function getData() {
     // Reset all working variables
@@ -161,7 +161,7 @@ async function getData() {
             } else if (hash) {
                 cell.style.backgroundColor = '#D94432';
             } else {
-                cell.style.backgroundColor = 'none';
+                cell.style.backgroundColor = 'white';
             }
         });
     }
@@ -278,18 +278,18 @@ function validatorOnlineRow(validator) {
  * @param {Validator} validator
  */
 function validatorReadyRow(validator) {
-    const row = document.createElement('tr')
-    const addressColumn = document.createElement('td');
-    addressColumn.innerHTML = `<a href="http://nimiq.watch/#${validator.address}" target="_blank" style="color: #0582CA;">${shortenAddress(validator.address)}</a>&nbsp;(${validator.portion.toFixed(2)}%)`;
-    row.appendChild(addressColumn)
+    // const addressColumn = document.createElement('td');
+    // addressColumn.innerHTML = `<a href="http://nimiq.watch/#${validator.address}" target="_blank" style="color: #0582CA;">${shortenAddress(validator.address)}</a>&nbsp;(${validator.portion.toFixed(2)}%)`;
+    // row.appendChild(addressColumn)
 
     windows.forEach((window, index) => {
         const readyTxn = isValidatorReady(validator.transactions, window.start, window.end);
-        const readyCell = document.createElement('td');
+        const readyCell = document.createElement('div');
         readyCell.classList.add('ready-cell');
         readyCell.dataset.windowStart = window.start.toString();
+        readyCell.innerHTML = `<a href="http://nimiq.watch/#${validator.address}" target="_blank" style="color: #0582CA;">${shortenAddress(validator.address)}</a>&nbsp;(${validator.portion.toFixed(2)}%)`;
         if (!readyTxn) {
-            readyCell.innerHTML = `<center style="color: #888">Not ready</center>`;
+            readyCell.innerHTML += `<center style="color: #888">Not ready</center>`;
         } else {
             $onlineSection.style.display = 'none';
             const window_genesis_hashes = genesis_hashes[window.start] || {};
@@ -300,7 +300,7 @@ function validatorReadyRow(validator) {
             }
             genesis_hashes[window.start] = window_genesis_hashes;
 
-            readyCell.innerHTML = `
+            readyCell.innerHTML += `
             <center data-genesis-hash="${readyTxn.data}">
                 <a href="http://nimiq.watch/#${readyTxn.hash}" target="_blank">
                     <span style="color: black">
@@ -310,8 +310,8 @@ function validatorReadyRow(validator) {
             </center>
             `;
         }
-        row.appendChild(readyCell);
+        $validatorReadyTable.appendChild(readyCell);
     })
 
-    $validatorReadyTable.appendChild(row)
+
 }
